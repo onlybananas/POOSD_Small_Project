@@ -1,40 +1,94 @@
 <html>
 <head>
-	<title>COP 4331 Contact Management Page</title>
+    <meta charset="UTF-8">
+	<title>COP4331 Contact Management Page</title>
 	<script type="text/javascript" src="js/code.js"></script>
     <link href="css/styles.css" rel="stylesheet">	
-    <link href="https://fonts.googleapis.com/css?family=Ubuntu" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" rel="stylesheet">
 	
 	<script type="text/javascript">
-	document.addEventListener('DOMContentLoaded', function() 
+        
+	/*
+    document.addEventListener('DOMContentLoaded', function() 
 	{
 		readCookie();
 	}, false);
+    */
 	</script>
 	
 </head>
+
 <body>
 
-<h1 id="title">COP 4331 LAMP Stack Demo</h1>
+    <!-- Main container to hold all the content -->
+    <div class="container">
+        
+        <!-- Title of the app -->
+        <h1>COP4331 Contact Manager</h1>
+        
+        <!-- Flexbox content area for the form and the contact list -->
+        <div class="content">
+            
+            <!-- Section for adding new contacts -->
+            <div class="form-container">
+                <h2>Add Contact</h2>
+                <!-- Contact form for adding new contacts -->
+                <form id="contact-form">
+                    <!-- Input field for contact name -->
+                    <sub>Name</sub><br>
+                    <input type="text" id="name" placeholder="John Doe" required>
 
-<div id="loggedInDiv">
-	<span id="userName"></span><br />
-	<button type="button" id="logoutButton" class="buttons" onclick="doLogout();"> Log Out </button>
-</div>
+                    <br><sub>Phone</sub><br>
+                    <!-- Input field for contact phone number -->
+                    <input type="text" id="phone" placeholder="(xxx)-xxx-xxxx" required>
 
-<div id="accessUIDiv">
-	<br />
+                    <br><sub>Email</sub><br>
+                    <!-- Input field for contact email address -->
+                    <input type="email" id="email" placeholder="email@example.com" required>
+                    
+                    <!-- Button to submit the form -->
+                    <div>
+                        <button type="submit">Add</button>
+                    </div>
+                    
+                </form>
+            </div>
+            
+            <!-- Section for displaying the list of contacts -->
+            <div class="contacts-container">
+                <h2>Contact List</h2>
+                
+                <!-- Search bar for filtering contacts -->
+                <input type="text" id="search" placeholder="Search Contact">
+                
+                <!-- Table container to hold the contact list -->
+                <div class="table-container">
+                    <!-- Table for displaying contacts -->
+                    <table id="contacts-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>Email</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Contact rows will be dynamically generated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
-	<input type="text" id="searchText" placeholder="Color To Search For"/>
-	<button type="button" id="searchColorButton" class="buttons" onclick="searchColor();"> Search Color </button><br />
-	<span id="colorSearchResult"></span>
-	<p id="colorList">
-	</p><br /><br />
+        <!-- Log out button and user name display -->
+            <span id="userName"></span><br />
+            <button type="button" id="logoutButton" class="buttons" onclick="doLogout();"> Log Out </button>
+        </div>
 
-	<input type="text" id="colorText" placeholder="Color To Add">
-	<button type="button" id="addColorButton" class="buttons" onclick="addColor();"> Add Color </button><br />
-	<span id="colorAddResult"></span>
-</div>
-
+    </div>
+    
+    <!-- Link to the external JavaScript file -->
+    <script src="script.js"></script>
 </body>
 </html>
