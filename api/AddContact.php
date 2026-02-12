@@ -1,4 +1,3 @@
-
 <?php
 
 // API: Add Contact
@@ -23,8 +22,25 @@
 	{
 		// Prepare and execute parameterized INSERT to prevent SQL injection
 		$stmt = $conn->prepare("INSERT into Contacts (FirstName, LastName, Email, Phone, UserID) VALUES (?, ?, ?, ?, ?)");
-		$stmt->bind_param("ssssi", $firstName, $lastName, $email, $phone, $userId);
-		$stmt->execute();
+		if (!$stmt) {
+			$conn->close();
+			returnWithError("Prepare failed: " . $conn->error);
+			exit();
+		}
+
+		if (!$stmt->bind_param("ssssi", $firstName, $lastName, $email, $phone, $userId)) {
+			$stmt->close();
+			$conn->close();
+			returnWithError("Bind failed: " . $stmt->error);
+			exit();
+		}
+
+		if (!$stmt->execute()) {
+			$stmt->close();
+			$conn->close();
+			returnWithError("Execute failed: " . $stmt->error);
+			exit();
+		}
 
 		$contactId = $stmt->insert_id;
 
