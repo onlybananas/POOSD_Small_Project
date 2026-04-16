@@ -47,19 +47,24 @@ async function addContact() {
   const last = document.getElementById("contactLastName")?.value.trim() || "";
   const phone = document.getElementById("contactPhone")?.value.trim() || "";
   const email = document.getElementById("contactEmail")?.value.trim() || "";
+  const favorite = document.getElementById("contactFavorite")?.checked || false;
 
   const msg = document.getElementById("contactAddResult");
   if (msg) msg.textContent = "";
 
   try {
     // addContact.php expects firstName,lastName,email,phone,userId
-    await apiRequest("addContact", {
+    const res = await apiRequest("addContact", {
       firstName: first,
       lastName: last,
       email,
       phone,
       userId,
     });
+
+    if (favorite && res?.contactId) {
+      setFavorite(res.contactId, true);
+    }
 
     if (msg) msg.textContent = "Contact added";
     clearContactForm();
@@ -82,6 +87,9 @@ function editContact(contactId, name, phone, email) {
   document.getElementById("contactPhone").value = phone;
   document.getElementById("contactEmail").value = email;
 
+  const favEl = document.getElementById("contactFavorite");
+  if (favEl) favEl.checked = isFavorite(contactId);
+
   document.getElementById("formTitle").textContent = "Edit Contact";
   document.getElementById("submitBtn").textContent = "Update";
   document.getElementById("cancelEditBtn").style.display = "inline-block";
@@ -99,6 +107,7 @@ async function saveEditContact() {
   const lastName = document.getElementById("contactLastName")?.value.trim() || "";
   const phone = document.getElementById("contactPhone")?.value.trim() || "";
   const email = document.getElementById("contactEmail")?.value.trim() || "";
+  const favorite = document.getElementById("contactFavorite")?.checked || false;
 
   const msg = document.getElementById("contactAddResult");
   if (msg) msg.textContent = "";
@@ -113,6 +122,8 @@ async function saveEditContact() {
       phone: phone,
       userId,
     });
+
+    setFavorite(contactId, favorite);
 
     if (msg) msg.textContent = "Contact updated";
     cancelEdit();
@@ -137,6 +148,7 @@ async function deleteContact(contactId) {
   try {
     // deleteContact.php expects { contactId, userId }
     await apiRequest("deleteContact", { contactId, userId });
+    setFavorite(contactId, false);
     searchContacts(document.getElementById("searchText")?.value.trim() || "");
   } catch (err) {
     if (msg) msg.textContent = err.message;
@@ -149,21 +161,40 @@ function renderContacts(results) {
 
   body.innerHTML = "";
 
-  for (const c of results) {
+  const sorted = [...results].sort((a, b) => {
+    const aId = Number(a.ID);
+    const bId = Number(b.ID);
+    const aFav = isFavorite(aId);
+    const bFav = isFavorite(bId);
+
+    if (aFav !== bFav) return aFav ? -1 : 1;
+
+    const aName = String(a.Name || "").toLowerCase();
+    const bName = String(b.Name || "").toLowerCase();
+    if (aName < bName) return -1;
+    if (aName > bName) return 1;
+
+    return aId - bId;
+  });
+
+  for (const c of sorted) {
     // SearchContact.php returns ID/Name/Phone/Email/DateCreated with this casing
     const id = Number(c.ID);
     const name = c.Name || "";
     const phone = c.Phone || "";
     const email = c.Email || "";
     const dateCreated = c.DateCreated ? formatDate(c.DateCreated) : "";
+    const fav = isFavorite(id);
+    const displayName = (fav ? "★ " : "") + name;
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${escapeHtml(name)}</td>
+      <td>${escapeHtml(displayName)}</td>
       <td>${escapeHtml(phone)}</td>
       <td>${escapeHtml(email)}</td>
       <td>${escapeHtml(dateCreated)}</td>
       <td>
+        <button type="button" onclick="toggleFavorite(${id})">${fav ? "★" : "☆"}</button>
         <button type="button" onclick="editContact(${id}, '${escapeAttr(name)}', '${escapeAttr(phone)}', '${escapeAttr(email)}')">Edit</button>
         <button type="button" onclick="deleteContact(${id})">Delete</button>
       </td>
@@ -177,10 +208,61 @@ function clearContactForm() {
   const lastEl = document.getElementById("contactLastName");
   const phoneEl = document.getElementById("contactPhone");
   const emailEl = document.getElementById("contactEmail");
+  const favEl = document.getElementById("contactFavorite");
   if (firstEl) firstEl.value = "";
   if (lastEl) lastEl.value = "";
   if (phoneEl) phoneEl.value = "";
   if (emailEl) emailEl.value = "";
+  if (favEl) favEl.checked = false;
+}
+
+function favoritesStorageKey() {
+  return `contactual_favorites_${userId}`;
+}
+
+function getFavoritesMap() {
+  try {
+    const raw = localStorage.getItem(favoritesStorageKey());
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveFavoritesMap(map) {
+  localStorage.setItem(favoritesStorageKey(), JSON.stringify(map));
+}
+
+function isFavorite(contactId) {
+  const id = String(Number(contactId));
+  if (id === "NaN") return false;
+  const map = getFavoritesMap();
+  return map[id] === true;
+}
+
+function setFavorite(contactId, favorite) {
+  const id = String(Number(contactId));
+  if (id === "NaN") return;
+  const map = getFavoritesMap();
+
+  if (favorite) map[id] = true;
+  else delete map[id];
+
+  saveFavoritesMap(map);
+}
+
+function toggleFavorite(contactId) {
+  const next = !isFavorite(contactId);
+  setFavorite(contactId, next);
+
+  const editId = Number(document.getElementById("editContactId")?.value);
+  if (!Number.isNaN(editId) && editId === Number(contactId)) {
+    const favEl = document.getElementById("contactFavorite");
+    if (favEl) favEl.checked = next;
+  }
+
+  searchContacts(document.getElementById("searchText")?.value.trim() || "");
 }
 
 function formatDate(dateStr) {
